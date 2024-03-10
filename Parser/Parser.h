@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <iomanip>
 #include "String.h"
 #include "Node.h"
 
@@ -47,6 +48,57 @@ public:
 		head = parse_string(str);
 	}
 
+	void evaluate()
+	{
+		if (head == nullptr)
+		{
+			std::cout << "No Input\n";
+			return;
+		}
+		bool error{};
+		int out{ head->evaluate(error) };
+		if (error) return;
+		std::cout << out << "\n\n";
+	}
+
+
+	void print_tree()
+	{
+		if (head == nullptr) return;
+		Node* current{ head };
+		size_t height{};
+		find_height(head, height, 1);
+
+		size_t rung{ height };
+		std::cout << std::setw((height + 1)*2) << " " << (char*)head->raw << "\n";
+		_print(head, 0, height);
+
+	}
+
+	void find_height(Node* current, size_t& max, size_t height)
+	{
+		if (current == nullptr) return;
+
+		find_height(current->left, max, height + 1);
+		if (height > max) max = height;
+		find_height(current->right, max, height + 1);
+	}
+
+	void _print(Node* current, size_t height, size_t max)
+	{
+		if (current == nullptr) return;
+		if (current->left != nullptr)
+		{
+			std::cout << std::setw((max - height)*2) << " " << (char*)current->left->raw;
+			if (current->right == nullptr) std::cout << "\n";
+		}
+		if (current->right != nullptr)
+		{
+			std::cout << " " << (char*)current->right->raw << "\n";
+		}
+		_print(current->left, height + 1, max);
+	}
+
 	static Node* parse_string(String str)
 	{
 		Node* head{};
@@ -73,19 +125,6 @@ public:
 		return head;
 	}
 
-	void evaluate()
-	{
-		if (head == nullptr)
-		{
-			std::cout << "No Input\n";
-			return;
-		}
-		bool error{};
-		int out{ head->evaluate(error) };
-		if (error) return;
-		std::cout << out << "\n\n";
-	}
-
 	static Node* createNode(size_t& i, String& str)
 	{
 		Node* newNode{};
@@ -110,12 +149,18 @@ public:
 			
 			if (str[i - 1] == '(')
 			{
-				String raw{ str[i++] };
-				for (; str[i] != ')'; ++i)
+				String raw{""};
+				size_t nested{};
+				for (; str[i] != '\0'; ++i)
 				{
+					if (str[i] == '(') nested++;
+					if (str[i] == ')') nested--;
 					raw += str[i];
+
+					if (nested == 0 && str[i + 1] == ')') break;
 				}
 				Node* inside{ parse_string(raw) };
+				if (inside == nullptr) return newNode;
 				newNode->left = inside;
 				inside->parent = newNode;
 				i++;
